@@ -197,6 +197,18 @@ class WorkspaceUtilsTests {
   }
 
   @Test
+  void testListParentRepositoryFolders_returnsOnlyAdditionalAncestors() throws IOException {
+    Path repo = Files.createDirectories(tempDir.resolve("repo/.git")).getParent();
+    Path modules = Files.createDirectories(repo.resolve("modules"));
+    Path app = Files.createDirectories(modules.resolve("app"));
+
+    List<WorkspaceFolder> result = WorkspaceUtils.listParentRepositoryFolders(
+        List.of(toWorkspaceFolder(app), toWorkspaceFolder(modules)));
+
+    assertEquals(List.of(repo), toPaths(result));
+  }
+
+  @Test
   void testIsParentRepositoryEnabled_trueByDefault() {
     assertTrue(WorkspaceUtils.isParentRepositoryEnabled());
   }
