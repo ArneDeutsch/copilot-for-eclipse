@@ -329,6 +329,7 @@ public class CustomInstructionPreferencePage extends FieldEditorPreferencePage i
 
     // add check box for also loading custom instructions from the parent git repositories of the projects
     Composite parentRepoInstrContainer = new Composite(projectInstrGroup, SWT.NONE);
+    parentRepoInstrContainer.setLayout(new GridLayout(1, false));
     parentRepoInstrContainer.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
     parentRepoInstrField = new BooleanFieldEditor(Constants.CUSTOM_INSTRUCTIONS_PARENT_REPO_ENABLED,
         Messages.preferences_page_custom_instructions_include_parent_repository, parentRepoInstrContainer);

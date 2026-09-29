@@ -193,7 +193,7 @@ public class CustomModesPreferencePage extends PreferencePage implements IWorkbe
       String modeId = mode.getId();
       Path modePath = Paths.get(java.net.URI.create(modeId));
 
-      List<WorkspaceFolder> workspaceFolders = WorkspaceUtils.listWorkspaceFolders();
+      List<WorkspaceFolder> workspaceFolders = WorkspaceUtils.listCustomizationFolders();
       if (workspaceFolders != null) {
         for (WorkspaceFolder folder : workspaceFolders) {
           Path folderPath = Paths.get(java.net.URI.create(folder.getUri()));

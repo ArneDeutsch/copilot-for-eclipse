@@ -1069,7 +1069,7 @@ public class McpPreferencePage extends FieldEditorPreferencePage implements IWor
       String modeId = mode.getId();
       Path modePath = Paths.get(java.net.URI.create(modeId));
 
-      List<WorkspaceFolder> workspaceFolders = WorkspaceUtils.listWorkspaceFolders();
+      List<WorkspaceFolder> workspaceFolders = WorkspaceUtils.listCustomizationFolders();
       if (workspaceFolders != null) {
         for (WorkspaceFolder folder : workspaceFolders) {
           try {
