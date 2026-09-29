@@ -114,9 +114,9 @@ public class ChatCompletionService implements CopilotAuthStatusListener {
         if (!skillsEnabled && template.source() == TemplateSource.SKILL) {
           continue;
         }
-        if (!EXCLUDED_COMMANDS.contains(template.id())) {
+        if (!EXCLUDED_COMMANDS.contains(template.commandName())) {
           newTemplates.add(template);
-          newCommands.add(TEMPLATE_MARK + template.id());
+          newCommands.add(TEMPLATE_MARK + template.commandName());
         }
       }
     } catch (InterruptedException | ExecutionException e) {
