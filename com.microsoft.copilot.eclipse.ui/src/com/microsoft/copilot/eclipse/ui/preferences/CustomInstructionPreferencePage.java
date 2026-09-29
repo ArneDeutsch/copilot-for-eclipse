@@ -3,7 +3,10 @@
 
 package com.microsoft.copilot.eclipse.ui.preferences;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.core.resources.IFile;
@@ -16,10 +19,14 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.layout.GridDataFactory;
 import org.eclipse.jface.preference.BooleanFieldEditor;
+import org.eclipse.jface.preference.FieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.StringFieldEditor;
 import org.eclipse.jface.text.ITextViewer;
+import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.lsp4j.WorkspaceFolder;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.SelectionListener;
@@ -46,6 +53,8 @@ import org.eclipse.ui.part.EditorPart;
 import com.microsoft.copilot.eclipse.core.Constants;
 import com.microsoft.copilot.eclipse.core.CopilotCore;
 import com.microsoft.copilot.eclipse.core.chat.CustomInstructionsChatLoadScope;
+import com.microsoft.copilot.eclipse.core.utils.FileUtils;
+import com.microsoft.copilot.eclipse.core.utils.WorkspaceUtils;
 import com.microsoft.copilot.eclipse.ui.CopilotUi;
 import com.microsoft.copilot.eclipse.ui.utils.PreferencesUtils;
 import com.microsoft.copilot.eclipse.ui.utils.SwtUtils;
@@ -62,6 +71,8 @@ public class CustomInstructionPreferencePage extends FieldEditorPreferencePage i
   private StringFieldEditor gitCommitInstrField;
   private Combo chatInstrLoadScopeCombo;
   private BooleanFieldEditor parentRepoInstrField;
+  private Table projectInstrTable;
+  private Button projectInstrEditButton;
 
   private static final CustomInstructionsChatLoadScope[] SCOPES = CustomInstructionsChatLoadScope.values();
 
@@ -164,6 +175,15 @@ public class CustomInstructionPreferencePage extends FieldEditorPreferencePage i
     super.performDefaults();
 
     updateChatInstrLoadScopeComboSelection(true);
+    populateProjectTable(parentRepoInstrField.getBooleanValue());
+  }
+
+  @Override
+  public void propertyChange(PropertyChangeEvent event) {
+    super.propertyChange(event);
+    if (event.getSource() == parentRepoInstrField && FieldEditor.VALUE.equals(event.getProperty())) {
+      populateProjectTable(parentRepoInstrField.getBooleanValue());
+    }
   }
 
   private void updateChatInstrLoadScopeComboSelection(boolean useDefaultValue) {
@@ -277,7 +297,8 @@ public class CustomInstructionPreferencePage extends FieldEditorPreferencePage i
     SwtUtils.resizeColumnToFillTable(table, fileLocationColumn, 100, projectNameColumn);
 
     // Populate table with actual workspace projects
-    populateProjectTable(table);
+    projectInstrTable = table;
+    populateProjectTable(getPreferenceStore().getBoolean(Constants.CUSTOM_INSTRUCTIONS_PARENT_REPO_ENABLED));
 
     // Create edit button
     createButton(tableContainer, table);
@@ -369,6 +390,7 @@ public class CustomInstructionPreferencePage extends FieldEditorPreferencePage i
 
     // Initially disable buttons if no selection
     editButton.setEnabled(false);
+    projectInstrEditButton = editButton;
   }
 
   private void handleEditButtonClick(Table table) {
@@ -377,14 +399,12 @@ public class CustomInstructionPreferencePage extends FieldEditorPreferencePage i
       return;
     }
 
-    String projectName = table.getItem(selectionIndex).getText(0);
-    IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(projectName);
-
-    if (project == null || !project.exists()) {
-      return;
+    Object data = table.getItem(selectionIndex).getData();
+    if (data instanceof IProject project && project.exists()) {
+      openInstructionFile(project, project.getName());
+    } else if (data instanceof Path instructionFile && UiUtils.openLocalFileInEditor(instructionFile) != null) {
+      promptToClosePreferencePage();
     }
-
-    openInstructionFile(project, projectName);
   }
 
   private void openInstructionFile(IProject project, String projectName) {
@@ -506,16 +526,24 @@ public class CustomInstructionPreferencePage extends FieldEditorPreferencePage i
     }
   }
 
-  private void createTableItem(Table table, String projectName, String fileLocation) {
+  private void createTableItem(Table table, String projectName, String fileLocation, Object data) {
     TableItem item = new TableItem(table, SWT.NONE);
     item.setText(0, projectName);
     item.setText(1, fileLocation);
+    item.setData(data);
   }
 
   /**
-   * Populates the table with actual workspace projects that have copilot instructions files.
+   * Populates the table with actual workspace projects that have copilot instructions files, and optionally with the
+   * folders of their parent git repositories that have copilot instructions files.
    */
-  private void populateProjectTable(Table table) {
+  private void populateProjectTable(boolean includeParentRepositories) {
+    Table table = projectInstrTable;
+    table.removeAll();
+    if (projectInstrEditButton != null) {
+      projectInstrEditButton.setEnabled(false);
+    }
+
     IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
     for (IProject project : projects) {
       if (project.exists() && project.isOpen()) {
@@ -527,9 +555,27 @@ public class CustomInstructionPreferencePage extends FieldEditorPreferencePage i
 
           // Only add projects to the table if the copilot-instructions.md file actually exists
           if (instructionFilePath.toFile().exists()) {
-            createTableItem(table, projectName, projectLocation.toOSString());
+            createTableItem(table, projectName, projectLocation.toOSString(), project);
           }
         }
+      }
+    }
+
+    if (!includeParentRepositories) {
+      return;
+    }
+    List<WorkspaceFolder> parentFolders =
+        WorkspaceUtils.listParentRepositoryFolders(WorkspaceUtils.listWorkspaceFolders());
+    for (WorkspaceFolder folder : parentFolders) {
+      Path folderPath = FileUtils.getLocalFilePath(folder.getUri());
+      if (folderPath == null) {
+        continue;
+      }
+      Path instructionFile = folderPath.resolve(GITHUB).resolve(COPILOT_INSTRUCTIONS);
+      if (Files.exists(instructionFile)) {
+        createTableItem(table,
+            NLS.bind(Messages.preferences_page_custom_instructions_project_table_parentRepository, folder.getName()),
+            folderPath.toString(), instructionFile);
       }
     }
   }

@@ -96,6 +96,7 @@ public class Messages extends NLS {
   public static String preferences_page_custom_instructions_project_table_fileLocation;
   public static String preferences_page_custom_instructions_project_table_editButton;
   public static String preferences_page_custom_instructions_project_table_note;
+  public static String preferences_page_custom_instructions_project_table_parentRepository;
   public static String preferences_page_custom_instructions_project_editDialog_title;
   public static String preferences_page_custom_instructions_project_editDialog_message;
   public static String preferences_page_custom_instructions_project_editDialog_button_close;

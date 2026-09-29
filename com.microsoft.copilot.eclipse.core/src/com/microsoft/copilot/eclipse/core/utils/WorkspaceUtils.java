@@ -192,6 +192,19 @@ public class WorkspaceUtils {
    */
   public static List<WorkspaceFolder> withParentRepositoryFolders(List<WorkspaceFolder> folders) {
     List<WorkspaceFolder> result = new ArrayList<>(folders);
+    result.addAll(listParentRepositoryFolders(folders));
+    return result;
+  }
+
+  /**
+   * List the ancestor folders up to and including the git repository root of the given workspace folders, as appended
+   * by {@link #withParentRepositoryFolders(List)}.
+   *
+   * @param folders the workspace folders
+   * @return the ancestor folders that are not contained in the given folders, without duplicates
+   */
+  public static List<WorkspaceFolder> listParentRepositoryFolders(List<WorkspaceFolder> folders) {
+    List<WorkspaceFolder> result = new ArrayList<>();
     Set<Path> knownPaths = new HashSet<>();
     List<Path> folderPaths = new ArrayList<>();
     for (WorkspaceFolder folder : folders) {
