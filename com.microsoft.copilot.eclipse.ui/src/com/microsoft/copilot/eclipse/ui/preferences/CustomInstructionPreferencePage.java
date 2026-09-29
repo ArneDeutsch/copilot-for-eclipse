@@ -61,6 +61,7 @@ public class CustomInstructionPreferencePage extends FieldEditorPreferencePage i
   private StringFieldEditor workspaceInstrField;
   private StringFieldEditor gitCommitInstrField;
   private Combo chatInstrLoadScopeCombo;
+  private BooleanFieldEditor parentRepoInstrField;
 
   private static final CustomInstructionsChatLoadScope[] SCOPES = CustomInstructionsChatLoadScope.values();
 
@@ -69,6 +70,7 @@ public class CustomInstructionPreferencePage extends FieldEditorPreferencePage i
   private String initialWorkspaceInstructions;
   private String initialGitCommitInstructions;
   private CustomInstructionsChatLoadScope initialChatCustomInstrLoadScope;
+  private boolean initialParentRepoEnabled;
 
   private static final String GITHUB = ".github";
   private static final String COPILOT_INSTRUCTIONS = "copilot-instructions.md";
@@ -116,6 +118,7 @@ public class CustomInstructionPreferencePage extends FieldEditorPreferencePage i
     initialWorkspaceEnabled = getPreferenceStore().getBoolean(Constants.CUSTOM_INSTRUCTIONS_WORKSPACE_ENABLED);
     initialWorkspaceInstructions = getPreferenceStore().getString(Constants.CUSTOM_INSTRUCTIONS_WORKSPACE);
     initialGitCommitInstructions = getPreferenceStore().getString(Constants.CUSTOM_INSTRUCTIONS_GIT_COMMIT);
+    initialParentRepoEnabled = getPreferenceStore().getBoolean(Constants.CUSTOM_INSTRUCTIONS_PARENT_REPO_ENABLED);
 
     initialChatCustomInstrLoadScope = PreferencesUtils.getCustomInstructionsChatLoadScope(getPreferenceStore());
     updateChatInstrLoadScopeComboSelection(false);
@@ -131,11 +134,13 @@ public class CustomInstructionPreferencePage extends FieldEditorPreferencePage i
     String currentWorkspaceInstructions = workspaceInstrField.getStringValue();
     String currentGitCommitInstructions = gitCommitInstrField.getStringValue();
     CustomInstructionsChatLoadScope currentCustomInstrLoadScope = getSelectedCustomInstrLoadScope();
+    boolean currentParentRepoEnabled = parentRepoInstrField.getBooleanValue();
 
     return currentWorkspaceEnabled != initialWorkspaceEnabled
         || !StringUtils.equals(currentWorkspaceInstructions, initialWorkspaceInstructions)
         || !StringUtils.equals(currentGitCommitInstructions, initialGitCommitInstructions)
-        || !initialChatCustomInstrLoadScope.equals(currentCustomInstrLoadScope);
+        || !initialChatCustomInstrLoadScope.equals(currentCustomInstrLoadScope)
+        || currentParentRepoEnabled != initialParentRepoEnabled;
   }
 
   @Override
@@ -144,6 +149,7 @@ public class CustomInstructionPreferencePage extends FieldEditorPreferencePage i
     initialWorkspaceEnabled = enableWorkspaceInstrField.getBooleanValue();
     initialWorkspaceInstructions = workspaceInstrField.getStringValue();
     initialGitCommitInstructions = gitCommitInstrField.getStringValue();
+    initialParentRepoEnabled = parentRepoInstrField.getBooleanValue();
 
     initialChatCustomInstrLoadScope = getSelectedCustomInstrLoadScope();
     getPreferenceStore().setValue(Constants.CUSTOM_INSTRUCTIONS_CHAT_LOAD_SCOPE,
@@ -299,6 +305,15 @@ public class CustomInstructionPreferencePage extends FieldEditorPreferencePage i
     chatInstrLoadScopeCombo.setItems(items);
     chatInstrLoadScopeCombo.setToolTipText(Messages.preferences_page_custom_instructions_chat_load_scope_combo_tooltip);
     chatInstrLoadScopeCombo.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+    // add check box for also loading custom instructions from the parent git repositories of the projects
+    Composite parentRepoInstrContainer = new Composite(projectInstrGroup, SWT.NONE);
+    parentRepoInstrContainer.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+    parentRepoInstrField = new BooleanFieldEditor(Constants.CUSTOM_INSTRUCTIONS_PARENT_REPO_ENABLED,
+        Messages.preferences_page_custom_instructions_include_parent_repository, parentRepoInstrContainer);
+    parentRepoInstrField.getDescriptionControl(parentRepoInstrContainer)
+        .setToolTipText(Messages.preferences_page_custom_instructions_include_parent_repository_tooltip);
+    addField(parentRepoInstrField);
   }
 
   private void createGitCommitInstructionsField(Composite parent, GridLayout gl) {
