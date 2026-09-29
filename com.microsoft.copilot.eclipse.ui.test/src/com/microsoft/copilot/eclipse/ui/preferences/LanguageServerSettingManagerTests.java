@@ -345,9 +345,9 @@ class LanguageServerSettingManagerTests {
     IEventBroker eventBroker = PlatformUI.getWorkbench().getService(IEventBroker.class);
     EventHandler handler = mock(EventHandler.class);
     eventBroker.subscribe(CopilotEventConstants.TOPIC_CHAT_DID_CHANGE_CUSTOMIZATION_FILES, handler);
+    LanguageServerSettingManager manager = new LanguageServerSettingManager(mockLsConnection, mockProxyService,
+        preferenceStore);
     try {
-      new LanguageServerSettingManager(mockLsConnection, mockProxyService, preferenceStore);
-
       preferenceStore.setValue(Constants.CUSTOM_INSTRUCTIONS_PARENT_REPO_ENABLED, false);
 
       for (CustomizationType type : CustomizationType.values()) {
@@ -355,6 +355,8 @@ class LanguageServerSettingManagerTests {
             .handleEvent(argThat(event -> event.getProperty(IEventBroker.DATA) == type));
       }
     } finally {
+      manager.unregisterPropertyChangeListener(manager);
+      manager.dispose();
       eventBroker.unsubscribe(handler);
       preferenceStore.setToDefault(Constants.CUSTOM_INSTRUCTIONS_PARENT_REPO_ENABLED);
     }

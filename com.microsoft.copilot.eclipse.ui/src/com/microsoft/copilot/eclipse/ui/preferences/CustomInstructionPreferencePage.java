@@ -575,7 +575,7 @@ public class CustomInstructionPreferencePage extends FieldEditorPreferencePage i
       Path instructionFile = folderPath.resolve(GITHUB).resolve(COPILOT_INSTRUCTIONS);
       if (Files.exists(instructionFile)) {
         createTableItem(table,
-            NLS.bind(Messages.preferences_page_custom_instructions_project_table_parentRepository, folder.getName()),
+            NLS.bind(Messages.preferences_page_parent_repository_folder, folder.getName()),
             folderPath.toString(), instructionFile);
       }
     }
