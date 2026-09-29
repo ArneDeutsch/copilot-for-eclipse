@@ -109,6 +109,8 @@ public class Messages extends NLS {
   public static String preferences_page_custom_instructions_chat_load_scope_all;
   public static String preferences_page_custom_instructions_chat_load_scope_referenced;
   public static String preferences_page_custom_instructions_chat_load_scope_combo_tooltip;
+  public static String preferences_page_custom_instructions_include_parent_repository;
+  public static String preferences_page_custom_instructions_include_parent_repository_tooltip;
   public static String preferences_page_note_prefix;
   public static String preferences_page_note_content;
 

@@ -31,6 +31,7 @@ import com.microsoft.copilot.eclipse.core.lsp.protocol.ConversationTemplate;
 import com.microsoft.copilot.eclipse.core.lsp.protocol.CopilotScope;
 import com.microsoft.copilot.eclipse.core.lsp.protocol.CopilotStatusResult;
 import com.microsoft.copilot.eclipse.core.lsp.protocol.TemplateSource;
+import com.microsoft.copilot.eclipse.core.utils.WorkspaceUtils;
 import com.microsoft.copilot.eclipse.ui.utils.PreferencesUtils;
 
 /**
@@ -103,7 +104,8 @@ public class ChatCompletionService implements CopilotAuthStatusListener {
     // Pass workspace folders so the language server returns workspace-specific
     // prompt files (.prompt.md) and skills (SKILL.md) alongside built-in templates.
     try {
-      List<WorkspaceFolder> workspaceFolders = LSPEclipseUtils.getWorkspaceFolders();
+      List<WorkspaceFolder> workspaceFolders =
+          WorkspaceUtils.withParentRepositoryFoldersIfEnabled(LSPEclipseUtils.getWorkspaceFolders());
       ConversationTemplate[] rawTemplates = this.lsConnection.listConversationTemplates(workspaceFolders).get();
       if (monitor.isCanceled()) {
         return;

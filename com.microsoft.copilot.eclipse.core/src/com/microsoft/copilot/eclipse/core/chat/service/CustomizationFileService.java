@@ -51,7 +51,7 @@ public class CustomizationFileService implements ICustomizationFileService {
         .getServiceContext(FrameworkUtil.getBundle(getClass()).getBundleContext()).get(IEventBroker.class);
     this.customizationFilesChangedHandler = event -> {
       if (event.getProperty(IEventBroker.DATA) instanceof CustomizationType type) {
-        CompletableFuture.runAsync(() -> refreshType(type, WorkspaceUtils.listWorkspaceFolders()));
+        CompletableFuture.runAsync(() -> refreshType(type, WorkspaceUtils.listCustomizationFolders()));
       }
     };
     if (eventBroker != null) {
@@ -80,7 +80,7 @@ public class CustomizationFileService implements ICustomizationFileService {
   @Override
   public void refreshAllAsync() {
     CompletableFuture.runAsync(() -> {
-      List<WorkspaceFolder> workspaceFolders = WorkspaceUtils.listWorkspaceFolders();
+      List<WorkspaceFolder> workspaceFolders = WorkspaceUtils.listCustomizationFolders();
       for (CustomizationType type : CustomizationType.values()) {
         refreshType(type, workspaceFolders);
       }
